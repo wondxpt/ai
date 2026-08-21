@@ -1,1 +1,42 @@
+name: extract a zip file
 
+# این بخش مشخص می‌کند کی این جریان کاری اجرا شود
+on:
+  # وقتی فایلی با پسوند .zip به مخزن اضافه شد
+  push:
+    paths:
+      - '**.zip'
+  # یا به صورت دستی از دکمه اجرا شود
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest  # محیط اجرا، یک سرور لینوکسی موقت
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2  # کدهای مخزن را دانلود می‌کند
+
+      - name: Run unzip
+        run: |
+          # 1. نام فایل zip را پیدا کن
+          filename=$(basename -s .zip *.zip)
+          
+          # 2. فایل zip را از حالت فشرده خارج کن
+          unzip *.zip
+          
+          # 3. فایل zip اصلی را پاک کن
+          rm *.zip
+          
+          # 4. محتویات را به ریشه مخزن منتقل کن
+          mv $filename temp
+          mv temp/out/* .  # ممکن است مسیر دقیق فرق کند
+          rm -r temp
+
+      - name: Commit and Push changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "Unzipped file automatically"
+          git push origin main
